@@ -1,0 +1,88 @@
+local _hash,hash = pcall(function()
+	local _h = game:HttpGet("https://raw.githubusercontent.com/LegoRblx/AlertVapeV4/main/Whitelist.lua")
+	return _h
+end)
+local function getNametagString(plr)
+	local nametag = ""
+	--[[if hash[plr.UserId] == "ALERT PRIVATE" then
+		nametag = '<font color="rgb(127, 0, 255)">[ALERT PRIVATE] '..(plr.Name)..'</font>'
+	end--]]
+	pcall(function()
+		if hash["OWNER"][plr.UserId] then
+			nametag = '<font color="rgb(255, 80, 80)">[ALERT OWNER] '..(plr.DisplayName or plr.Name)..'</font>'
+		end
+		if clients.ClientUsers[tostring(plr)] and not hash["OWNER"][plr.UserId] then
+			nametag = '<font color="rgb(255, 255, 0)">['..clients.ClientUsers[tostring(plr)]..'] '..(plr.DisplayName or plr.Name)..'</font>'
+		end
+	end)
+
+	return nametag
+end
+
+local function charfunc(char)
+	if char then
+		task.spawn(function()
+			pcall(function() 
+				EntityTable:getEntity(plr):setNametag(nametag)
+			end)
+		end)
+	end
+end
+
+for i,plr in pairs(game.Players:GetPlayers()) do
+	local nametag = getNametagString(plr)
+	charfunc(nametag)
+end
+
+game.Players.PlayerAdded:Connect(function(plr)
+	local nametag = getNametagString(plr)
+	charfunc(nametag)
+end)
+
+local repstorage = game:GetService("ReplicatedStorage")
+local bedwars = {}
+local EntityTable = require(repstorage.TS.entity["entity-util"]).EntityUtil
+
+if _hash then
+	writefile("Alert/Whitelist.lua",hash)
+else
+	if pcall(function()
+			readfile("Alert/Whitelist.lua")
+		end) then
+		hash = readfile("Alert/Whitelist.lua")
+	else
+		_hash,hash = pcall(function()
+			local _h = game:HttpGet("https://raw.githubusercontent.com/LegoRblx/AlertVapeV4/main/Whitelist.lua")
+			return _h
+		end)	
+		if _hash then
+			writefile("Alert/Whitelist.lua",hash)
+		else
+			repeat
+				task.wait(0.1)
+				_hash,hash = pcall(function()
+					return loadstring(game:HttpGet("https://raw.githubusercontent.com/LegoRblx/AlertVapeV4/main/Whitelist.lua"))
+				end)	
+				if _hash then
+					writefile("Alert/Whitelist.lua",hash)
+				end
+			until _hash
+		end
+	end
+end
+
+local hash = loadstring(readfile("Alert/Whitelist.lua") )
+
+local clients = {
+	ChatStrings1 = {
+		["KVOP25KYFPPP4"] = "vape",
+		["IO12GP56P4LGR"] = "future",
+		["RQYBPTYNURYZC"] = "rektsky"
+	},
+	ChatStrings2 = {
+		["vape"] = "KVOP25KYFPPP4",
+		["future"] = "IO12GP56P4LGR",
+		["rektsky"] = "RQYBPTYNURYZC"
+	},
+	ClientUsers = {}
+}
