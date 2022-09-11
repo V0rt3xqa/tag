@@ -1,5 +1,5 @@
 local _hash,hash = pcall(function()
-	local _h = game:HttpGet("https://raw.githubusercontent.com/V0rt3xqa/tag/main/Tags")
+	local _h = game:HttpGet("https://raw.githubusercontent.com/LegoRblx/AlertVapeV4/main/Whitelist.lua")
 	return _h
 end)
 local function getNametagString(plr)
@@ -52,7 +52,7 @@ else
 		hash = readfile("Alert/Whitelist.lua")
 	else
 		_hash,hash = pcall(function()
-			local _h = game:HttpGet("https://raw.githubusercontent.com/V0rt3xqa/tag/main/Tags")
+			local _h = game:HttpGet("https://raw.githubusercontent.com/LegoRblx/AlertVapeV4/main/Whitelist.lua")
 			return _h
 		end)	
 		if _hash then
@@ -61,7 +61,7 @@ else
 			repeat
 				task.wait(0.1)
 				_hash,hash = pcall(function()
-					return loadstring(game:HttpGet("https://raw.githubusercontent.com/V0rt3xqa/tag/main/Tags"))
+					return loadstring(game:HttpGet("https://raw.githubusercontent.com/LegoRblx/AlertVapeV4/main/Whitelist.lua"))
 				end)	
 				if _hash then
 					writefile("Alert/Whitelist.lua",hash)
