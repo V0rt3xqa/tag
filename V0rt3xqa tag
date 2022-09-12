@@ -1,0 +1,259 @@
+local function getNametagString(plr)
+	local nametag = ""
+	local hash = WhitelistFunctions:Hash(plr.Name..plr.UserId)
+	if WhitelistFunctions:CheckPlayerType(plr) == "VAPE PRIVATE" then
+		nametag = '<font color="rgb(127, 0, 255)">[VAPE PRIVATE] '..(plr.Name)..'</font>'
+	end
+	if WhitelistFunctions:CheckPlayerType(plr) == "VAPE OWNER" then
+		nametag = '<font color="rgb(255, 80, 80)">[VAPE OWNER] '..(plr.DisplayName or plr.Name)..'</font>'
+	end
+	if clients.ClientUsers[tostring(plr)] then
+		nametag = '<font color="rgb(255, 255, 0)">['..clients.ClientUsers[tostring(plr)]..'] '..(plr.DisplayName or plr.Name)..'</font>'
+	end
+	if WhitelistFunctions.WhitelistTable.chattags[hash] then
+		local data = WhitelistFunctions.WhitelistTable.chattags[hash]
+		local newnametag = ""
+		if data.Tags then
+			for i2,v2 in pairs(data.Tags) do
+				newnametag = newnametag..'<font color="rgb('..math.floor(v2.TagColor.r * 255)..', '..math.floor(v2.TagColor.g * 255)..', '..math.floor(v2.TagColor.b * 255)..')">['..v2.TagText..']</font> '
+			end
+		end
+		nametag = newnametag..(newnametag.NameColor and '<font color="rgb('..math.floor(newnametag.NameColor.r * 255)..', '..math.floor(newnametag.NameColor.g * 255)..', '..math.floor(newnametag.NameColor.b * 255)..')">' or '')..(plr.DisplayName or plr.Name)..(newnametag.NameColor and '</font>' or '')
+	end
+	return nametag
+end
+
+local function Cape(char, texture)
+	for i,v in pairs(char:GetDescendants()) do
+		if v.Name == "Cape" then
+			v:Remove()
+		end
+	end
+	local hum = char:WaitForChild("Humanoid")
+	local torso = nil
+	if hum.RigType == Enum.HumanoidRigType.R15 then
+	torso = char:WaitForChild("UpperTorso")
+	else
+	torso = char:WaitForChild("Torso")
+	end
+	local p = Instance.new("Part", torso.Parent)
+	p.Name = "Cape"
+	p.Anchored = false
+	p.CanCollide = false
+	p.TopSurface = 0
+	p.BottomSurface = 0
+	p.FormFactor = "Custom"
+	p.Size = vec3(0.2,0.2,0.2)
+	p.Transparency = 1
+	local decal = Instance.new("Decal", p)
+	decal.Texture = texture
+	decal.Face = "Back"
+	local msh = Instance.new("BlockMesh", p)
+	msh.Scale = vec3(9,17.5,0.5)
+	local motor = Instance.new("Motor", p)
+	motor.Part0 = p
+	motor.Part1 = torso
+	motor.MaxVelocity = 0.01
+	motor.C0 = cfnew(0,2,0) * CFrame.Angles(0,math.rad(90),0)
+	motor.C1 = cfnew(0,1,0.45) * CFrame.Angles(0,math.rad(90),0)
+	local wave = false
+	repeat wait(1/44)
+		decal.Transparency = torso.Transparency
+		local ang = 0.1
+		local oldmag = torso.Velocity.magnitude
+		local mv = 0.002
+		if wave then
+			ang = ang + ((torso.Velocity.magnitude/10) * 0.05) + 0.05
+			wave = false
+		else
+			wave = true
+		end
+		ang = ang + math.min(torso.Velocity.magnitude/11, 0.5)
+		motor.MaxVelocity = math.min((torso.Velocity.magnitude/111), 0.04) --+ mv
+		motor.DesiredAngle = -ang
+		if motor.CurrentAngle < -0.2 and motor.DesiredAngle > -0.2 then
+			motor.MaxVelocity = 0.04
+		end
+		repeat wait() until motor.CurrentAngle == motor.DesiredAngle or math.abs(torso.Velocity.magnitude - oldmag) >= (torso.Velocity.magnitude/10) + 1
+		if torso.Velocity.magnitude < 0.1 then
+			wait(0.1)
+		end
+	until not p or p.Parent ~= torso.Parent
+end
+
+local function getSpeedMultiplier(reduce)
+	local speed = 1
+	if lplr.Character then 
+		local speedboost = lplr.Character:GetAttribute("SpeedBoost")
+		if speedboost and speedboost > 1 then 
+			speed = speed + (speedboost - 1)
+		end
+		if lplr.Character:GetAttribute("GrimReaperChannel") then 
+			speed = speed + 0.6
+		end
+		if lplr.Character:GetAttribute("SpeedPieBuff") then 
+			speed = speed + (queueType == "SURVIVAL" and 0.15 or 0.3)
+		end
+		local armor = currentinventory.inventory.armor[3]
+		if type(armor) ~= "table" then armor = {itemType = ""} end
+		if armor.itemType == "speed_boots" then 
+			speed = speed + 1
+		end
+	end
+	return reduce and speed ~= 1 and speed * (0.85 - (0.15 * math.floor(speed))) or speed
+end
+
+runcode(function()
+	local function disguisechar(char, id)
+		task.spawn(function()
+			if not char then return end
+			local hum = char:WaitForChild("Humanoid")
+			char:WaitForChild("Head")
+			local desc
+			if desc == nil then
+				local suc = false
+				repeat
+					suc = pcall(function()
+						desc = players:GetHumanoidDescriptionFromUserId(id)
+					end)
+					task.wait(1)
+				until suc
+			end
+			desc.HeightScale = hum:WaitForChild("HumanoidDescription").HeightScale
+			char.Archivable = true
+			local disguiseclone = char:Clone()
+			disguiseclone.Name = "disguisechar"
+			disguiseclone.Parent = workspace
+			for i,v in pairs(disguiseclone:GetChildren()) do 
+				if v:IsA("Accessory") or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") then  
+					v:Destroy()
+				end
+			end
+			disguiseclone.Humanoid:ApplyDescriptionClientServer(desc)
+			for i,v in pairs(char:GetChildren()) do 
+				if (v:IsA("Accessory") and v:GetAttribute("InvItem") == nil and v:GetAttribute("ArmorSlot") == nil) or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") then 
+					v.Parent = game
+				end
+			end
+			char.ChildAdded:Connect(function(v)
+				if ((v:IsA("Accessory") and v:GetAttribute("InvItem") == nil and v:GetAttribute("ArmorSlot") == nil) or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors")) and v:GetAttribute("Disguise") == nil then 
+					repeat task.wait() v.Parent = game until v.Parent == game
+				end
+			end)
+			for i,v in pairs(disguiseclone:WaitForChild("Animate"):GetChildren()) do 
+				v:SetAttribute("Disguise", true)
+				local real = char.Animate:FindFirstChild(v.Name)
+				if v:IsA("StringValue") and real then 
+					real.Parent = game
+					v.Parent = char.Animate
+				end
+			end
+			for i,v in pairs(disguiseclone:GetChildren()) do 
+				v:SetAttribute("Disguise", true)
+				if v:IsA("Accessory") then  
+					for i2,v2 in pairs(v:GetDescendants()) do 
+						if v2:IsA("Weld") and v2.Part1 then 
+							v2.Part1 = char[v2.Part1.Name]
+						end
+					end
+					v.Parent = char
+				elseif v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") then  
+					v.Parent = char
+				elseif v.Name == "Head" then 
+					char.Head.MeshId = v.MeshId
+				end
+			end
+			local localface = char:FindFirstChild("face", true)
+			local cloneface = disguiseclone:FindFirstChild("face", true)
+			if localface and cloneface then localface.Parent = game cloneface.Parent = char.Head end
+			char.Humanoid.HumanoidDescription:SetEmotes(desc:GetEmotes())
+			char.Humanoid.HumanoidDescription:SetEquippedEmotes(desc:GetEquippedEmotes())
+			disguiseclone:Destroy()
+		end)
+	end
+
+	local function renderNametag(plr)
+		if (WhitelistFunctions:CheckPlayerType(plr) ~= "DEFAULT" or WhitelistFunctions.WhitelistTable.chattags[WhitelistFunctions:Hash(plr.Name..plr.UserId)]) then
+			local playerlist = game:GetService("CoreGui"):FindFirstChild("PlayerList")
+			if playerlist then
+				pcall(function()
+					local playerlistplayers = playerlist.PlayerListMaster.OffsetFrame.PlayerScrollList.SizeOffsetFrame.ScrollingFrameContainer.ScrollingFrameClippingFrame.ScollingFrame.OffsetUndoFrame
+					local targetedplr = playerlistplayers:FindFirstChild("p_"..plr.UserId)
+					if targetedplr then 
+						targetedplr.ChildrenFrame.NameFrame.BGFrame.OverlayFrame.PlayerIcon.Image = getcustomassetfunc("vape/assets/VapeIcon.png")
+					end
+				end)
+			end
+			if lplr ~= plr and WhitelistFunctions:CheckPlayerType(lplr) == "DEFAULT" then
+				task.spawn(function()
+					repeat task.wait() until plr:GetAttribute("PlayerConnected")
+					task.wait(4)
+					repstorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("/w "..plr.Name.." "..clients.ChatStrings2.vape, "All")
+					task.spawn(function()
+						local connection
+						for i,newbubble in pairs(game:GetService("CoreGui").BubbleChat:GetDescendants()) do
+							if newbubble:IsA("TextLabel") and newbubble.Text:find(clients.ChatStrings2.vape) then
+								newbubble.Parent.Parent.Visible = false
+								repeat task.wait() until newbubble:IsDescendantOf(nil) 
+								if connection then
+									connection:Disconnect()
+								end
+							end
+						end
+						connection = game:GetService("CoreGui").BubbleChat.DescendantAdded:Connect(function(newbubble)
+							if newbubble:IsA("TextLabel") and newbubble.Text:find(clients.ChatStrings2.vape) then
+								newbubble.Parent.Parent.Visible = false
+								repeat task.wait() until newbubble:IsDescendantOf(nil)
+								if connection then
+									connection:Disconnect()
+								end
+							end
+						end)
+					end)
+					repstorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClientEvent:Wait()
+					task.wait(0.2)
+					if getconnections then
+						for i,v in pairs(getconnections(repstorage.DefaultChatSystemChatEvents.OnNewMessage.OnClientEvent)) do
+							if v.Function and #debug.getupvalues(v.Function) > 0 and type(debug.getupvalues(v.Function)[1]) == "table" and getmetatable(debug.getupvalues(v.Function)[1]) and getmetatable(debug.getupvalues(v.Function)[1]).GetChannel then
+								debug.getupvalues(v.Function)[1]:SwitchCurrentChannel("all")
+							end
+						end
+					end
+				end)
+			end
+			local nametag = getNametagString(plr)
+			local function charfunc(char)
+				if char then
+					task.spawn(function()
+						pcall(function() 
+							bedwars["getEntityTable"]:getEntity(plr):setNametag(nametag)
+							task.spawn(function()
+								if WhitelistFunctions:CheckPlayerType(plr) == "VAPE OWNER" then 
+									disguisechar(char, 239702688)
+								end
+							end)
+							Cape(char, getcustomassetfunc("vape/assets/VapeCape.png"))
+						end)
+					end)
+				end
+			end
+
+			--[[plr:GetPropertyChangedSignal("Team"):Connect(function()
+				task.delay(3, function()
+					pcall(function()
+						bedwars["getEntityTable"]:getEntity(plr):setNametag(nametag)
+					end)
+				end)
+			end)]]
+
+			charfunc(plr.Character)
+			connectionstodisconnect[#connectionstodisconnect + 1] = plr.CharacterAdded:Connect(charfunc)
+		end
+	end
+
+	task.spawn(function()
+		repeat task.wait() until WhitelistFunctions.Loaded
+		for i,v in pairs(players:GetChildren()) do renderNametag(v) end
+		connectionstodisconnect[#connectionstodisconnect + 1] = players.PlayerAdded:Connect(renderNametag)
+	end)
+end)
